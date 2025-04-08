@@ -48,7 +48,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
           <MenuIcon />
         </IconButton>
         <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
-          E-commerce Admin
+          Urban Kicks Admin
         </Typography>
         
         {username && (

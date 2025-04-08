@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -7,9 +7,16 @@ import {
   Button,
   TextField,
   Grid,
+  IconButton,
+  Typography,
+  Divider,
 } from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { CreateProductInput, Product } from '../../types/product';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { ImageUploader } from '../ImageUploader';
+import { uploadImage } from '../../services/imageUpload';
 
 interface ProductFormProps {
   open: boolean;
@@ -19,19 +26,39 @@ interface ProductFormProps {
 }
 
 export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormProps) => {
-  const { control, handleSubmit } = useForm<CreateProductInput>({
+  const { control, handleSubmit, setValue } = useForm<CreateProductInput>({
     defaultValues: product || {
       name: '',
       type: '',
       brandid: '',
       description: '',
       listprice: 0,
+      supplierID: 0,
       image: '',
+      inventory: [{
+        size: '',
+        color: '',
+        quantity: 0,
+        image: ''
+      }]
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "inventory"
+  });
+
+  const handleMainImageUploaded = (imageUrl: string) => {
+    setValue('image', imageUrl);
+  };
+
+  const handleVariationImageUploaded = (imageUrl: string, index: number) => {
+    setValue(`inventory.${index}.image`, imageUrl);
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>{product ? 'Edit Product' : 'Add New Product'}</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
@@ -118,16 +145,88 @@ export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormPro
             </Grid>
             <Grid item xs={12}>
               <Controller
-                name="image"
+                name="supplierID"
                 control={control}
-                render={({ field }) => (
+                rules={{ required: 'Supplier ID is required' }}
+                render={({ field, fieldState }) => (
                   <TextField
                     {...field}
-                    label="Image URL"
+                    label="Supplier ID"
+                    type="number"
                     fullWidth
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
                   />
                 )}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <ImageUploader
+                onImageUploaded={handleMainImageUploaded}
+                currentImageUrl={product?.image}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>
+                Inventory Variations
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              {fields.map((field, index) => (
+                <Grid container spacing={2} key={field.id} sx={{ mb: 2 }}>
+                  <Grid item xs={12} sm={3}>
+                    <Controller
+                      name={`inventory.${index}.size`}
+                      control={control}
+                      rules={{ required: 'Size is required' }}
+                      render={({ field, fieldState }) => (
+                        <TextField {...field} label="Size" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />
+                      )}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <Controller
+                      name={`inventory.${index}.color`}
+                      control={control}
+                      rules={{ required: 'Color is required' }}
+                      render={({ field, fieldState }) => (
+                        <TextField {...field} label="Color" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />
+                      )}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={2}>
+                    <Controller
+                      name={`inventory.${index}.quantity`}
+                      control={control}
+                      rules={{ required: 'Quantity is required', min: 0 }}
+                      render={({ field, fieldState }) => (
+                        <TextField {...field} type="number" label="Quantity" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />
+                      )}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <ImageUploader
+                      onImageUploaded={(url) => handleVariationImageUploaded(url, index)}
+                      currentImageUrl={field.image}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
+                    {fields.length > 1 && (
+                      <IconButton onClick={() => remove(index)} color="error">
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                  </Grid>
+                </Grid>
+              ))}
+              
+              <Button
+                startIcon={<AddIcon />}
+                onClick={() => append({ size: '', color: '', quantity: 0, image: '' })}
+                sx={{ mt: 1 }}
+              >
+                Add Variation
+              </Button>
             </Grid>
           </Grid>
         </DialogContent>

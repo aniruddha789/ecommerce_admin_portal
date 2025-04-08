@@ -36,7 +36,7 @@ export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => 
         </Typography>
         <Box sx={{ mt: 2 }}>
           <Typography variant="h6" color="primary">
-            ${product.listprice}
+          ₹{product.listprice}
           </Typography>
           <Typography variant="body2">Type: {product.type}</Typography>
           <Typography variant="body2">Total Stock: {totalStock}</Typography>

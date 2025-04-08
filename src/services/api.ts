@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { Product, CreateProductInput, UpdateProductInput } from '../types/product';
 
-const BASE_URL = 'https://backend.myurbankicks.in:8082';
+const BASE_URL = 'http://localhost:8082';
+// const BASE_URL = 'https://backend.myurbankicks.in:8082';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -58,13 +59,7 @@ export const productService = {
   },
 
   createProduct: async (productData: CreateProductInput): Promise<Status> => {
-    const response = await api.post('/product/addProduct', {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: productData
-    });
+    const response = await api.post('/product/addProduct', productData);
     return response.data;
   },
 
