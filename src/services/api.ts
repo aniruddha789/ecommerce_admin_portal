@@ -138,7 +138,8 @@ export const authService = {
 
     const response = await api.post('/user/login', {
       username,
-      password: encryptedPassword
+      password: encryptedPassword,
+      adminLogin: true
     });
     
     if (response.data.token) {
