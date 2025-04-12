@@ -166,9 +166,27 @@ export const authService = {
           'Content-Type': 'application/json'
         }
       });
+
+      // Check if the token is valid
+      if (!response.data.valid) {
+        // Token is invalid, perform logout
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'; // Redirect to login page
+        }
+        return false;
+      }
+
       return response.data.valid;
     } catch (error) {
       console.error('Error validating token:', error);
+      // Handle error (e.g., perform logout)
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'; // Redirect to login page
+      }
       return false;
     }
   }
