@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Product, CreateProductInput, UpdateProductInput } from '../types/product';
+import JSEncrypt from 'jsencrypt'; // Import JSEncrypt for password encryption
 
 const BASE_URL = 'http://localhost:8082';
 // const BASE_URL = 'https://backend.myurbankicks.in:8082';
@@ -38,47 +39,49 @@ api.interceptors.response.use(
   }
 );
 
+// Product CRUD APIs
+export const getAllProducts = async (page: number, pageSize: number): Promise<{ content: Product[], totalPages: number }> => {
+  const response = await api.get(`/product/getProductPaged?page=${page}&size=${pageSize}`);
+  return response.data;
+};
+
+export const getProductsByType = async (type: string, page: number, pageSize: number): Promise<{ content: Product[], totalPages: number }> => {
+  const response = await api.get(`/product/getProductByTypePaged/${type}?page=${page}&size=${pageSize}`);
+  return response.data;
+};
+
+export const getProduct = async (id: number): Promise<Product> => {
+  const response = await api.get(`/product/getProduct/${id}`);
+  return response.data;
+};
+
+export const createProduct = async (productData: CreateProductInput): Promise<{ status: string, message: string }> => {
+  const response = await api.post('/product/addProduct', productData);
+  return response.data;
+};
+
+export const updateProduct = async (id: number, productData: UpdateProductInput): Promise<{ status: string, message: string }> => {
+  // Note: Backend doesn't have update endpoint, you'll need to add it to the backend
+  const response = await api.post(`/product/updateProduct/${id}`, productData);
+  return response.data;
+};
+
+export const deleteProduct = async (id: number): Promise<{ status: string, message: string }> => {
+  const response = await api.post(`/product/deleteProduct/${id}`);
+  return response.data;
+};
+
 export const productService = {
-  getAllProducts: async (page: number, pageSize: number): Promise<{ 
-    content: Product[], 
-    totalPages: number,
-    totalElements: number 
-  }> => {
-    const response = await api.get(`/product/getProductPaged?page=${page}&size=${pageSize}`);
-    return response.data;
-  },
-
-  getProductsByType: async (type: string, page: number, pageSize: number): Promise<{ content: Product[], totalPages: number }> => {
-    const response = await api.get(`/product/getProductByTypePaged/${type}?page=${page}&size=${pageSize}`);
-    return response.data;
-  },
-
-  getProduct: async (id: number): Promise<Product> => {
-    const response = await api.get(`/product/getProduct/${id}`);
-    return response.data;
-  },
-
-  createProduct: async (productData: CreateProductInput): Promise<Status> => {
-    const response = await api.post('/product/addProduct', productData);
-    return response.data;
-  },
-
-  updateProduct: async (id: number, productData: UpdateProductInput): Promise<Status> => {
-    // Note: Backend doesn't have update endpoint, you'll need to add it to the backend
-    const response = await api.post(`/product/updateProduct/${id}`, productData);
-    return response.data;
-  },
-
-  deleteProduct: async (id: number): Promise<Status> => {
-    const response = await api.post(`/product/deleteProduct/${id}`);
-    return response.data;
-  },
-
+  getAllProducts,
+  getProductsByType,
+  getProduct,
+  createProduct,
+  updateProduct,
+  deleteProduct,
   getProductInventory: async (productId: number): Promise<Inventory[]> => {
     const response = await api.get(`/product/getInventory/${productId}`);
     return response.data;
   },
-
   searchProducts: async (query: string): Promise<Product[]> => {
     const response = await api.get(`/product/search?query=${query}`);
     return response.data;
@@ -100,6 +103,16 @@ interface LoginResponse {
   firstname: string;
 }
 
+// Function to get public key for encryption
+const getPublicKey = async (): Promise<string> => {
+  const response = await axios.get(`${BASE_URL}/auth/public-key`);
+  const newPublicKey = response.data.publicKey;
+  if (!newPublicKey) {
+    throw new Error('Failed to fetch public key from server');
+  }
+  return newPublicKey;
+};
+
 // Auth service
 export const authService = {
   register: async (username: string, email: string, password: string, firstname: string, lastname: string): Promise<RegisterResponse> => {
@@ -114,9 +127,18 @@ export const authService = {
   },
 
   login: async (username: string, password: string): Promise<LoginResponse> => {
+    const publicKey = await getPublicKey();
+    const encrypt = new JSEncrypt();
+    encrypt.setPublicKey(publicKey);
+    const encryptedPassword = encrypt.encrypt(password);
+    
+    if (!encryptedPassword) {
+      throw new Error('Password encryption failed');
+    }
+
     const response = await api.post('/user/login', {
       username,
-      password
+      password: encryptedPassword
     });
     
     if (response.data.token) {

@@ -93,7 +93,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUploaded, c
           <img
             src={currentImageUrl}
             alt="Uploaded"
-            className="max-h-16 max-w-full mb-4 rounded"
+            className="h-50 w-50  rounded"
+            style={{ height: '70px', width : '50px' }}
           />
         )}
         {!currentImageUrl && !loading && (

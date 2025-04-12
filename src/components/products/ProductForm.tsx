@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -16,7 +16,8 @@ import { CreateProductInput, Product } from '../../types/product';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { ImageUploader } from '../ImageUploader';
-import { uploadImage } from '../../services/imageUpload';
+import { productService } from '../../services/api';
+import './ProductForm.css';
 
 interface ProductFormProps {
   open: boolean;
@@ -49,12 +50,40 @@ export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormPro
     name: "inventory"
   });
 
+  const [mainImage, setMainImage] = useState<string>('');
+  const [productData, setProductData] = useState({
+    ...product,
+    image: product?.image || '',
+  });
+
+  useEffect(() => {
+    if (product) {
+      setMainImage(product.image);
+      setProductData({ ...productData, image: product.image });
+    
+    }
+  }, [product]);
+
   const handleMainImageUploaded = (imageUrl: string) => {
-    setValue('image', imageUrl);
+    setMainImage(imageUrl);
+    setValue(`image`, imageUrl);
+    setProductData({ ...productData, image: imageUrl });
   };
 
   const handleVariationImageUploaded = (imageUrl: string, index: number) => {
     setValue(`inventory.${index}.image`, imageUrl);
+  };
+
+  const handleUpdateProduct = async () => {
+    console.log('Updating product with data:', productData);
+    try {
+      const response = await productService.updateProduct(product.id, productData);
+      console.log('Update response:', response);
+      // Handle success (e.g., show a success message)
+    } catch (error) {
+      console.error('Update error:', error);
+      // Handle error (e.g., show an error message)
+    }
   };
 
   return (
@@ -163,7 +192,7 @@ export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormPro
             <Grid item xs={12}>
               <ImageUploader
                 onImageUploaded={handleMainImageUploaded}
-                currentImageUrl={product?.image}
+                currentImageUrl={mainImage || undefined}
               />
             </Grid>
             <Grid item xs={12}>
