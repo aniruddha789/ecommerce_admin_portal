@@ -1,0 +1,17 @@
+/* ProductForm.css */
+
+.image-container {
+  margin-top: 10px;
+}
+
+.product-image {
+  width: 50px; /* Set the desired width for the main image */
+  height: 50px !important; /* Maintain aspect ratio */
+  object-fit: cover; /* Ensure the image covers the area */
+}
+
+.inventory-image {
+  width: 60px; /* Set the desired width for inventory images */
+  height: auto; /* Maintain aspect ratio */
+  object-fit: cover; /* Ensure the image covers the area */
+}

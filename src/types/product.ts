@@ -17,6 +17,15 @@ export interface CreateProductInput {
   brandid: string;
   description: string;
   listprice: number;
+  supplierID: number;
+  image: string;
+  inventory: InventoryInput[];
+}
+
+export interface InventoryInput {
+  size: string;
+  color: string;
+  quantity: number;
   image: string;
 }
 

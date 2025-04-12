@@ -40,6 +40,12 @@ export const Login = () => {
   return (
     <Box
       sx={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
         height: '100vh',
         display: 'flex',
         alignItems: 'center',
@@ -47,7 +53,7 @@ export const Login = () => {
         bgcolor: 'background.default',
       }}
     >
-      <Paper sx={{ p: 4, maxWidth: 400, width: '100%' }}>
+      <Paper sx={{ p: 4, maxWidth: 400, width: '100%', mx: 2 }}>
         <Typography variant="h5" gutterBottom>
           Login to Admin Panel
         </Typography>
@@ -89,4 +95,4 @@ export const Login = () => {
       </Paper>
     </Box>
   );
-}; 
+};
