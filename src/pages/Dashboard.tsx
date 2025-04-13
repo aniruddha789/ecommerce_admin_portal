@@ -1,4 +1,3 @@
-import React from 'react';
 import { Typography, Grid, Paper, Box, CircularProgress } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '../services/api';
@@ -24,7 +23,7 @@ export const Dashboard = () => {
               <CircularProgress size={24} />
             ) : (
               <Typography variant="h3">
-                {productData?.totalElements || 0}
+                {productData?.totalPages || 0}
               </Typography>
             )}
           </Paper>

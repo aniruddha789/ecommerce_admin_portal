@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Grid, Button, Box } from '@mui/material';
 import { ProductCard } from './ProductCard';
 import { Product } from '../../types/product';
@@ -7,7 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 interface ProductListProps {
   products: Product[];
   onEdit: (product: Product) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: number) => void;
   onAdd: () => void;
 }
 

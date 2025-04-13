@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -19,7 +19,6 @@ import { CreateProductInput, Product } from '../../types/product';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { ImageUploader } from '../ImageUploader';
-import { productService } from '../../services/api';
 import './ProductForm.css';
 
 interface ProductFormProps {
@@ -27,9 +26,10 @@ interface ProductFormProps {
   onClose: () => void;
   onSubmit: (data: CreateProductInput) => void;
   product?: Product;
+  refetch: () => void;
 }
 
-export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormProps) => {
+export const ProductForm = ({ open, onClose, onSubmit, product, refetch }: ProductFormProps) => {
   const { control, handleSubmit, setValue, reset } = useForm<CreateProductInput>({
     defaultValues: product || {
       name: '',
@@ -57,17 +57,44 @@ export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormPro
   // State to control the visibility of inventory section
   const [showInventory, setShowInventory] = useState(false);
 
-  useEffect(() => {
-    if (product) {
-      setMainImage(product.image);
-      setProductData({ ...productData, image: product.image });
-      // If editing a product with existing inventory, show the inventory section
-      if (product.inventory && product.inventory.length > 0) {
-        setShowInventory(true);
-      }
-      reset(product); // Reset form with product data when it changes
+// In ProductForm component:
+useEffect(() => {
+  if (product) {
+    setMainImage(product.image || '');
+    setProductData({ ...product, image: product.image || '' });
+    // If editing a product with existing inventory, show the inventory section
+    if (product.inventory && product.inventory.length > 0) {
+      setShowInventory(true);
+    } else {
+      setShowInventory(false);
     }
-  }, [product, reset]);
+    reset(product); // Reset form with product data
+  } else {
+    // Reset to empty form when adding a new product
+    setMainImage('');
+    setProductData({
+      name: '',
+      type: '',
+      brandid: '',
+      description: '',
+      listprice: 0,
+      supplierID: 0,
+      image: '',
+      inventory: []
+    });
+    setShowInventory(false);
+    reset({
+      name: '',
+      type: '',
+      brandid: '',
+      description: '',
+      listprice: 0,
+      supplierID: 0,
+      image: '',
+      inventory: []
+    });
+  }
+}, [product, reset]);
 
   const handleMainImageUploaded = (imageUrl: string) => {
     setMainImage(imageUrl);
@@ -79,19 +106,8 @@ export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormPro
     setValue(`inventory.${index}.image`, imageUrl);
   };
 
-  const handleUpdateProduct = async () => {
-    console.log('Updating product with data:', productData);
-    try {
-      const response = await productService.updateProduct(product.id, productData);
-      console.log('Update response:', response);
-      // Handle success (e.g., show a success message)
-    } catch (error) {
-      console.error('Update error:', error);
-      // Handle error (e.g., show an error message)
-    }
-  };
 
-  const handleSubmitForm = async (data: CreateProductInput) => {
+  const handleFormSubmit = async (data: CreateProductInput) => {
     // Filter out inventory items that do not have valid values
     const inventory = data.inventory.filter(item => 
       item.size.trim() !== '' && 
@@ -105,8 +121,9 @@ export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormPro
       inventory, // Include only valid inventory items
     };
 
-    // Call the onSubmit prop with the modified data
-    onSubmit(productDataToSubmit);
+    await onSubmit(productDataToSubmit); // Call the onSubmit prop
+    refetch(); // Call refetch to refresh the product list
+    onClose(); // Close the form
   };
 
   // Handler to show inventory section and add first variation
@@ -126,7 +143,7 @@ export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormPro
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{product ? 'Edit Product' : 'Add New Product'}</DialogTitle>
-      <form onSubmit={handleSubmit(handleSubmitForm)}>
+      <form onSubmit={handleSubmit(handleFormSubmit)}>
         <DialogContent>
           <Grid container spacing={2}>
             <Grid item xs={12}>
@@ -206,7 +223,6 @@ export const ProductForm = ({ open, onClose, onSubmit, product }: ProductFormPro
                   <TextField
                     {...field}
                     label="List Price"
-                    type="number"
                     fullWidth
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}

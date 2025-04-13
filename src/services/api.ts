@@ -1,6 +1,7 @@
 import axios from 'axios';
-import { Product, CreateProductInput, UpdateProductInput } from '../types/product';
+import { Product, CreateProductInput } from '../types/product';
 import JSEncrypt from 'jsencrypt'; // Import JSEncrypt for password encryption
+import { Inventory } from '@/types/Inventory';
 
 const BASE_URL = 'http://localhost:8082';
 // const BASE_URL = 'https://backend.myurbankicks.in:8082';
@@ -60,8 +61,7 @@ export const createProduct = async (productData: CreateProductInput): Promise<{ 
   return response.data;
 };
 
-export const updateProduct = async (id: number, productData: UpdateProductInput): Promise<{ status: string, message: string }> => {
-  // Note: Backend doesn't have update endpoint, you'll need to add it to the backend
+export const updateProduct = async (id: number, productData: CreateProductInput): Promise<{ status: string, message: string }> => {
   const response = await api.post(`/product/updateProduct/${id}`, productData);
   return response.data;
 };
@@ -192,10 +192,3 @@ export const authService = {
     }
   }
 };
-
-// Add Status type to match backend response
-interface Status {
-  status: string;
-  message: string;
-  code: string;
-} 

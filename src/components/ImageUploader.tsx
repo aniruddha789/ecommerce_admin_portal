@@ -1,4 +1,4 @@
-import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, useRef } from 'react';
 import { uploadImage } from '../services/imageUpload';
 import { Box } from '@mui/material';
 
@@ -21,7 +21,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUploaded, c
         const url = await uploadImage(file);
         onImageUploaded(url);
       } catch (err) {
-        setError('Image upload failed. Please try again.');
+        console.log(err)
+        setError('Image upload failed. Please try again');
       } finally {
         setLoading(false);
       }
