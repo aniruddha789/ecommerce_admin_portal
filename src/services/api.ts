@@ -3,8 +3,8 @@ import { Product, CreateProductInput } from '../types/product';
 import JSEncrypt from 'jsencrypt'; // Import JSEncrypt for password encryption
 import { Inventory } from '@/types/Inventory';
 
-const BASE_URL = 'http://localhost:8082';
-// const BASE_URL = 'https://backend.myurbankicks.in:8082';
+// const BASE_URL = 'http://localhost:8082';
+const BASE_URL = 'https://backend.myurbankicks.in:8082';
 
 const api = axios.create({
   baseURL: BASE_URL,
