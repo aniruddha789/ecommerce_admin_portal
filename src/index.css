@@ -13,6 +13,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon {
+  width: 45px; /* Set your desired width */
+  height: 32px; /* Set your desired height */
+}
+
 a {
   font-weight: 500;
   color: #646cff;
