@@ -1,6 +1,7 @@
 import { Typography, Grid, Paper, Box, CircularProgress } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '../services/api';
+import { MultiImageUploader } from '@/components/MultiImageUploader';
 
 export const Dashboard = () => {
   const { data: productData, isLoading } = useQuery({
@@ -27,6 +28,7 @@ export const Dashboard = () => {
               </Typography>
             )}
           </Paper>
+          <MultiImageUploader onImagesUploaded={(urls : string) => { console.log(urls)}}></MultiImageUploader>
         </Grid>
       </Grid>
     </Box>

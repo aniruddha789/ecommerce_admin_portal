@@ -18,7 +18,7 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { CreateProductInput, Product } from '../../types/product';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { ImageUploader } from '../ImageUploader';
+import { MultiImageUploader } from '../MultiImageUploader';
 import './ProductForm.css';
 
 interface ProductFormProps {
@@ -102,8 +102,12 @@ useEffect(() => {
     setProductData({ ...productData, image: imageUrl });
   };
 
-  const handleVariationImageUploaded = (imageUrl: string, index: number) => {
-    setValue(`inventory.${index}.image`, imageUrl);
+
+   // Function to update a specific variation's image URLs
+   const handleImagesUploaded = (variationIndex: number, imageUrls: string) => {
+    
+    setValue(`inventory.${variationIndex}.image`, imageUrls);
+
   };
 
 
@@ -116,9 +120,15 @@ useEffect(() => {
       item.image.trim() !== ''
     );
 
+    // Concatenate image URLs for each inventory item
+    const updatedInventory = inventory.map(item => ({
+      ...item,
+      image: item.image // Assuming image is an array of URLs
+    }));
+
     const productDataToSubmit = {
       ...data,
-      inventory, // Include only valid inventory items
+      inventory: updatedInventory, // Include only valid inventory items
     };
 
     await onSubmit(productDataToSubmit); // Call the onSubmit prop
@@ -248,9 +258,9 @@ useEffect(() => {
               />
             </Grid>
             <Grid item xs={12}>
-              <ImageUploader
-                onImageUploaded={handleMainImageUploaded}
-                currentImageUrl={mainImage || undefined}
+              <MultiImageUploader
+                  onImagesUploaded={(urls) => handleMainImageUploaded(urls)}
+                  currentImageUrls={mainImage || undefined}
               />
             </Grid>
             
@@ -295,9 +305,9 @@ useEffect(() => {
                       />
                     </Grid>
                     <Grid item xs={12} sm={3}>
-                      <ImageUploader
-                        onImageUploaded={(url) => handleVariationImageUploaded(url, index)}
-                        currentImageUrl={field.image}
+                      <MultiImageUploader
+                        onImagesUploaded={(urls) => handleImagesUploaded(index, urls)}
+                        currentImageUrls={field.image}
                       />
                     </Grid>
                     <Grid item xs={12} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
