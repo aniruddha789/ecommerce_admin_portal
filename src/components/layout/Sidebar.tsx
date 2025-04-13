@@ -1,8 +1,7 @@
-import React from 'react';
 import {
   Drawer,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -20,18 +19,18 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
   return (
     <Drawer open={open} onClose={onClose}>
       <List sx={{ width: 250 }}>
-        <ListItem button component={Link} to="/">
+        <ListItemButton component={Link} to="/">
           <ListItemIcon>
             <DashboardIcon />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
-        </ListItem>
-        <ListItem button component={Link} to="/products">
+        </ListItemButton>
+        <ListItemButton component={Link} to="/products">
           <ListItemIcon>
             <InventoryIcon />
           </ListItemIcon>
           <ListItemText primary="Products" />
-        </ListItem>
+        </ListItemButton>
       </List>
       <Divider />
     </Drawer>

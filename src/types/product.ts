@@ -6,6 +6,7 @@ export interface Product {
   type: string;
   brandid: string;
   description: string;
+  supplierID: number;
   listprice: number;
   image: string;
   inventory: Array<Inventory>;

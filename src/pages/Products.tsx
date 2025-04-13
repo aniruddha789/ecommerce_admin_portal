@@ -14,9 +14,9 @@ import {
 import { useProducts } from '../hooks/useProducts';
 import { ProductList } from '../components/products/ProductList';
 import { ProductForm } from '../components/products/ProductForm';
-import { Product } from '../types/product';
+import { CreateProductInput, Product } from '../types/product';
+import { SelectChangeEvent } from '@mui/material';
 
-const PAGE_SIZE = 12;
 const PRODUCT_TYPES = ['tops', 'bottoms', 'shoe', 'accessories']; // Add your product types here
 
 export const Products = () => {
@@ -34,7 +34,8 @@ export const Products = () => {
     error,
     createProduct,
     updateProduct,
-    deleteProduct 
+    deleteProduct,
+    refetch
   } = useProducts();
 
   const handleEdit = (product: Product) => {
@@ -53,20 +54,22 @@ export const Products = () => {
     setIsFormOpen(true);
   };
 
-  const handleFormSubmit = async (data: any) => {
+  const handleFormSubmit = async (data: CreateProductInput) => {
     if (selectedProduct) {
-      await updateProduct({ id: selectedProduct.id, data });
+      const updateData = { id: selectedProduct.id, data };
+      await updateProduct(updateData);
     } else {
       await createProduct(data);
     }
     setIsFormOpen(false);
+    refetch();
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value - 1); // API uses 0-based indexing
   };
 
-  const handleTypeChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleTypeChange = (event: SelectChangeEvent<string>) => {
     const newType = event.target.value as string;
     setType(newType);
     setPage(0); // Reset to first page when changing type
@@ -132,6 +135,7 @@ export const Products = () => {
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleFormSubmit}
         product={selectedProduct}
+        refetch={refetch}
       />
     </Box>
   );
