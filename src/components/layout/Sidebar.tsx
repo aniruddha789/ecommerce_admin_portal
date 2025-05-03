@@ -9,6 +9,7 @@ import {
 import { Link } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 
 interface SidebarProps {
   open: boolean;
@@ -30,6 +31,12 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
             <InventoryIcon />
           </ListItemIcon>
           <ListItemText primary="Products" />
+        </ListItemButton>
+        <ListItemButton component={Link} to="/orders">
+          <ListItemIcon>
+            <ShoppingBasketIcon />
+          </ListItemIcon>
+          <ListItemText primary="Orders" />
         </ListItemButton>
       </List>
       <Divider />

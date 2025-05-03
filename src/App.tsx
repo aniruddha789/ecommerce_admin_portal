@@ -8,6 +8,7 @@ import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Products } from './pages/Products';
 import { Login } from './pages/Login';
+import Orders from './pages/Orders';
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ function App() {
               }>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/products" element={<Products />} />
+                <Route path="/orders" element={<Orders />} />
               </Route>
             </Routes>
           </BrowserRouter>

@@ -4,7 +4,7 @@ import JSEncrypt from 'jsencrypt'; // Import JSEncrypt for password encryption
 import { Inventory } from '@/types/Inventory';
 
 // const BASE_URL = 'http://localhost:8082';
-const BASE_URL = 'https://backend.myurbankicks.in:8082';
+const BASE_URL = 'https://backend.myurbankicks.in';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -191,4 +191,65 @@ export const authService = {
       return false;
     }
   }
+};
+
+// Define the OrderItem interface
+export interface OrderItem {
+  id: number;
+  productId: number;
+  name: string;
+  size: string;
+  color: string;
+  quantity: number;
+  image: string;
+  price: number;
+}
+
+// Add this interface to src/services/api.ts
+export interface Address {
+  id: number;
+  addressType: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  district: string;
+  state: string;
+  pincode: number;
+  country: string;
+}
+
+// Update the Order interface
+export interface Order {
+  id: number;
+  orderDate: string;
+  orderStatus: string;
+  address: Address | null;
+  orderItems: OrderItem[];
+}
+
+// Define the OrdersResponse interface
+export interface OrdersResponse {
+  id: number;
+  orderDate: string;
+  orderStatus: string;
+  userId: number;
+  orders: Order[];
+}
+
+// Update the getPlacedOrders function to return OrdersResponse
+export const getPlacedOrders = async (username: string): Promise<OrdersResponse> => {
+  const response = await api.get(`${BASE_URL}/order/getOrders/${username}`);
+  return response.data; // Ensure this matches the OrdersResponse structure
+};
+
+// Update the interfaces to match the response structure
+export interface UserOrders {
+  userId: number;
+  orders: Order[];
+}
+
+// Update the getAllOrders function
+export const getAllOrders = async (): Promise<UserOrders[]> => {
+  const response = await api.get('/order/getAllOrders');
+  return response.data;
 };
