@@ -13,7 +13,6 @@ import {
   Collapse,
   IconButton,
   Grid,
-  Button,
   Menu,
   MenuItem,
 } from '@mui/material';
@@ -23,7 +22,6 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PersonIcon from '@mui/icons-material/Person';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { LoadingButton } from '@mui/lab';
 
 interface RowProps {
   order: Order;
@@ -61,7 +59,7 @@ const StatusUpdateMenu: React.FC<{
   currentStatus: string;
   orderId: number;
   onStatusUpdate: (newStatus: OrderStatus) => Promise<void>;
-}> = ({ currentStatus, orderId, onStatusUpdate }) => {
+}> = ({ currentStatus, onStatusUpdate }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [loading, setLoading] = useState(false);
   const open = Boolean(anchorEl);
@@ -117,19 +115,15 @@ const StatusUpdateMenu: React.FC<{
 
 const OrderRow: React.FC<RowProps> = ({ order, userId }) => {
   const [open, setOpen] = useState(false);
-  const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
 
   const handleStatusUpdate = async (newStatus: OrderStatus) => {
     try {
-      setStatusUpdateLoading(true);
       await updateOrderStatus(order.id, newStatus);
       // Trigger a refresh of the orders list
       window.location.reload(); // You might want to implement a more elegant solution
     } catch (error) {
       console.error('Failed to update order status:', error);
       alert('Failed to update order status. Please try again.');
-    } finally {
-      setStatusUpdateLoading(false);
     }
   };
 
