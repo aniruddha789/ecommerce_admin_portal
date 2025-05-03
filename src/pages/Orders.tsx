@@ -13,12 +13,17 @@ import {
   Collapse,
   IconButton,
   Grid,
+  Button,
+  Menu,
+  MenuItem,
 } from '@mui/material';
-import { getAllOrders, Order, UserOrders } from '../services/api';
+import { getAllOrders, Order, UserOrders, OrderStatus, updateOrderStatus } from '../services/api';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PersonIcon from '@mui/icons-material/Person';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { LoadingButton } from '@mui/lab';
 
 interface RowProps {
   order: Order;
@@ -52,8 +57,81 @@ const AddressDisplay: React.FC<{ address: Order['address'] }> = ({ address }) =>
   );
 };
 
+const StatusUpdateMenu: React.FC<{
+  currentStatus: string;
+  orderId: number;
+  onStatusUpdate: (newStatus: OrderStatus) => Promise<void>;
+}> = ({ currentStatus, orderId, onStatusUpdate }) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [loading, setLoading] = useState(false);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleStatusChange = async (status: OrderStatus) => {
+    setLoading(true);
+    try {
+      await onStatusUpdate(status);
+    } finally {
+      setLoading(false);
+      handleClose();
+    }
+  };
+
+  return (
+    <>
+      <IconButton
+        onClick={handleClick}
+        size="small"
+        disabled={loading}
+      >
+        <MoreVertIcon />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+      >
+        {Object.values(OrderStatus).map((status) => (
+          <MenuItem
+            key={status}
+            onClick={() => handleStatusChange(status)}
+            disabled={status === currentStatus || loading}
+            sx={{
+              fontWeight: status === currentStatus ? 'bold' : 'normal',
+            }}
+          >
+            {status.replace(/_/g, ' ')}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
+  );
+};
+
 const OrderRow: React.FC<RowProps> = ({ order, userId }) => {
   const [open, setOpen] = useState(false);
+  const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
+
+  const handleStatusUpdate = async (newStatus: OrderStatus) => {
+    try {
+      setStatusUpdateLoading(true);
+      await updateOrderStatus(order.id, newStatus);
+      // Trigger a refresh of the orders list
+      window.location.reload(); // You might want to implement a more elegant solution
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      alert('Failed to update order status. Please try again.');
+    } finally {
+      setStatusUpdateLoading(false);
+    }
+  };
 
   const getCondensedAddress = (address: Order['address']) => {
     if (!address) return <Typography color="text.secondary">No Address</Typography>;
@@ -81,20 +159,27 @@ const OrderRow: React.FC<RowProps> = ({ order, userId }) => {
         </TableCell>
         <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
         <TableCell>
-          <Chip
-            label={order.orderStatus}
-            color={
-              order.orderStatus === 'COMPLETED'
-                ? 'success'
-                : order.orderStatus === 'PENDING'
-                ? 'warning'
-                : order.orderStatus === 'CANCELLED'
-                ? 'error'
-                : order.orderStatus === 'PAYMENT_SUCCESSFULL'
-                ? 'info'
-                : 'default'
-            }
-          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+              label={order.orderStatus}
+              color={
+                order.orderStatus === OrderStatus.DELIVERED
+                  ? 'success'
+                  : order.orderStatus === OrderStatus.PROCESSING
+                  ? 'warning'
+                  : order.orderStatus === OrderStatus.CANCELLED
+                  ? 'error'
+                  : order.orderStatus === OrderStatus.PAYMENT_SUCCESSFULL
+                  ? 'info'
+                  : 'default'
+              }
+            />
+            <StatusUpdateMenu
+              currentStatus={order.orderStatus}
+              orderId={order.id}
+              onStatusUpdate={handleStatusUpdate}
+            />
+          </Box>
         </TableCell>
         <TableCell sx={{ maxWidth: 200 }}>
           {getCondensedAddress(order.address)}

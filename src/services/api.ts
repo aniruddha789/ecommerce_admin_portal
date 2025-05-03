@@ -253,3 +253,22 @@ export const getAllOrders = async (): Promise<UserOrders[]> => {
   const response = await api.get('/order/getAllOrders');
   return response.data;
 };
+
+// Add the OrderStatus enum
+export enum OrderStatus {
+  CART = 'CART',
+  PLACED = 'PLACED',
+  PROCESSING = 'PROCESSING',
+  SHIPPED = 'SHIPPED',
+  DELIVERED = 'DELIVERED',
+  PAYMENT_PENDING = 'PAYMENT_PENDING',
+  PAYMENT_SUCCESSFULL = 'PAYMENT_SUCCESSFULL',
+  PAYMENT_FAILED = 'PAYMENT_FAILED',
+  CANCELLED = 'CANCELLED'
+}
+
+// Add the update order status function
+export const updateOrderStatus = async (orderId: number, status: OrderStatus): Promise<string> => {
+  const response = await api.put(`/order/updateOrderStatusById?orderId=${orderId}&status=${status}`);
+  return response.data;
+};
