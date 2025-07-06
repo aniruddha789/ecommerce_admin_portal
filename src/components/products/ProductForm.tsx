@@ -20,6 +20,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { MultiImageUploader } from '../MultiImageUploader';
 import './ProductForm.css';
+import { Inventory } from '@/types/Inventory';
 
 interface ProductFormProps {
   open: boolean;
@@ -29,17 +30,35 @@ interface ProductFormProps {
   refetch: () => void;
 }
 
+type InventoryColorGroup = {
+  color: string;
+  images: string;
+  sizes: { size: string; quantity: number }[];
+};
+
 export const ProductForm = ({ open, onClose, onSubmit, product, refetch }: ProductFormProps) => {
-  const { control, handleSubmit, setValue, reset } = useForm<CreateProductInput>({
-    defaultValues: product || {
-      name: '',
-      type: '',
-      brandid: '',
-      description: '',
-      listprice: 0,
-      supplierID: 0,
-      image: '',
-      inventory: [],
+  // Helper for grouping old inventory by color (for edit mode)
+  function groupInventoryByColor(inventory: Inventory[]) {
+    const colorMap: { [color: string]: InventoryColorGroup } = {};
+    inventory.forEach(item => {
+      if (!colorMap[item.color]) {
+        colorMap[item.color] = {
+          color: item.color,
+          images: item.image,
+          sizes: [],
+        };
+      }
+      colorMap[item.color].sizes.push({ size: item.size, quantity: item.quantity });
+    });
+    return Object.values(colorMap);
+  }
+
+  const { control, handleSubmit, setValue, reset, getValues } = useForm<CreateProductInput & { inventory: InventoryColorGroup[] }>({
+    defaultValues: {
+      ...product,
+      inventory: product?.inventory
+        ? groupInventoryByColor(product.inventory)
+        : [{ color: '', images: '', sizes: [{ size: '', quantity: 0 }] }],
     },
   });
 
@@ -56,45 +75,50 @@ export const ProductForm = ({ open, onClose, onSubmit, product, refetch }: Produ
 
   // State to control the visibility of inventory section
   const [showInventory, setShowInventory] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-// In ProductForm component:
-useEffect(() => {
-  if (product) {
-    setMainImage(product.image || '');
-    setProductData({ ...product, image: product.image || '' });
-    // If editing a product with existing inventory, show the inventory section
-    if (product.inventory && product.inventory.length > 0) {
-      setShowInventory(true);
+  useEffect(() => {
+    if (product) {
+      setMainImage(product.image || '');
+      setProductData({ ...product, image: product.image || '' });
+      // If editing a product with existing inventory, show the inventory section
+      if (product.inventory && product.inventory.length > 0) {
+        setShowInventory(true);
+      } else {
+        setShowInventory(false);
+      }
+      reset({
+        ...product,
+        inventory: product?.inventory
+          ? groupInventoryByColor(product.inventory)
+          : [{ color: '', images: '', sizes: [{ size: '', quantity: 0 }] }],
+      });
     } else {
+      // Reset to empty form when adding a new product
+      setMainImage('');
+      setProductData({
+        name: '',
+        type: '',
+        brandid: '',
+        description: '',
+        listprice: 0,
+        supplierID: 0,
+        image: '',
+        inventory: []
+      });
       setShowInventory(false);
+      reset({
+        name: '',
+        type: '',
+        brandid: '',
+        description: '',
+        listprice: 0,
+        supplierID: 0,
+        image: '',
+        inventory: [{ color: '', images: '', sizes: [{ size: '', quantity: 0 }] }]
+      });
     }
-    reset(product); // Reset form with product data
-  } else {
-    // Reset to empty form when adding a new product
-    setMainImage('');
-    setProductData({
-      name: '',
-      type: '',
-      brandid: '',
-      description: '',
-      listprice: 0,
-      supplierID: 0,
-      image: '',
-      inventory: []
-    });
-    setShowInventory(false);
-    reset({
-      name: '',
-      type: '',
-      brandid: '',
-      description: '',
-      listprice: 0,
-      supplierID: 0,
-      image: '',
-      inventory: []
-    });
-  }
-}, [product, reset]);
+  }, [product, reset]);
 
   const handleMainImageUploaded = (imageUrl: string) => {
     setMainImage(imageUrl);
@@ -102,38 +126,45 @@ useEffect(() => {
     setProductData({ ...productData, image: imageUrl });
   };
 
-
-   // Function to update a specific variation's image URLs
-   const handleImagesUploaded = (variationIndex: number, imageUrls: string) => {
-    
-    setValue(`inventory.${variationIndex}.image`, imageUrls);
-
+  // Handler for images
+  const handleImagesUploaded = (colorIndex: number, imageUrls: string) => {
+    setValue(`inventory.${colorIndex}.images`, imageUrls);
   };
 
+  // Updated handlers for sizes
+  const handleAddSize = (colorIndex: number) => {
+    const currentSizes = getValues(`inventory.${colorIndex}.sizes`) || [];
+    const newSizes = [...currentSizes, { size: '', quantity: 0 }];
+    setValue(`inventory.${colorIndex}.sizes`, newSizes);
+    setRefreshTrigger(prev => prev + 1); // Force re-render
+  };
 
-  const handleFormSubmit = async (data: CreateProductInput) => {
-    // Filter out inventory items that do not have valid values
-    const inventory = data.inventory.filter(item => 
-      item.size.trim() !== '' && 
-      item.color.trim() !== '' && 
-      item.quantity > 0 && 
-      item.image.trim() !== ''
+  const handleRemoveSize = (colorIndex: number, sizeIndex: number) => {
+    const currentSizes = getValues(`inventory.${colorIndex}.sizes`) || [];
+    const newSizes = currentSizes.filter((_, i) => i !== sizeIndex);
+    setValue(`inventory.${colorIndex}.sizes`, newSizes);
+    setRefreshTrigger(prev => prev + 1); // Force re-render
+  };
+
+  // On submit, flatten inventory
+  const handleFormSubmit = async (data: CreateProductInput & { inventory: InventoryColorGroup[] }) => {
+    const flatInventory = data.inventory.flatMap((colorGroup: InventoryColorGroup) =>
+      colorGroup.sizes
+        .filter(s => s.size && s.quantity > 0)
+        .map(s => ({
+          color: colorGroup.color,
+          size: s.size,
+          quantity: s.quantity,
+          image: colorGroup.images,
+        }))
     );
-
-    // Concatenate image URLs for each inventory item
-    const updatedInventory = inventory.map(item => ({
-      ...item,
-      image: item.image // Assuming image is an array of URLs
-    }));
-
     const productDataToSubmit = {
       ...data,
-      inventory: updatedInventory, // Include only valid inventory items
+      inventory: flatInventory,
     };
-
-    await onSubmit(productDataToSubmit); // Call the onSubmit prop
-    refetch(); // Call refetch to refresh the product list
-    onClose(); // Close the form
+    await onSubmit(productDataToSubmit);
+    refetch();
+    onClose();
   };
 
   // Handler to show inventory section and add first variation
@@ -141,7 +172,7 @@ useEffect(() => {
     setShowInventory(true);
     // Only append if there are no fields yet
     if (fields.length === 0) {
-      append({ size: '', color: '', quantity: 0, image: '' });
+      append({ color: '', images: '', sizes: [{ size: '', quantity: 0 }] });
     }
   };
 
@@ -268,64 +299,83 @@ useEffect(() => {
             {showInventory ? (
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  Inventory Variations
+                  Inventory Variations (by Color)
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
-                
-                {fields.map((field, index) => (
-                  <Grid container spacing={2} key={field.id} sx={{ mb: 2 }}>
-                    <Grid item xs={12} sm={3}>
-                      <Controller
-                        name={`inventory.${index}.size`}
-                        control={control}
-                        rules={{ required: 'Size is required' }}
-                        render={({ field, fieldState }) => (
-                          <TextField {...field} label="Size" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />
+                {fields.map((field, colorIndex) => (
+                  <Box key={field.id} sx={{ mb: 3, p: 2, border: '1px solid #eee', borderRadius: 2 }}>
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid item xs={12} sm={3}>
+                        <Controller
+                          name={`inventory.${colorIndex}.color`}
+                          control={control}
+                          rules={{ required: 'Color is required' }}
+                          render={({ field, fieldState }) => (
+                            <TextField {...field} label="Color" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />
+                          )}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={5}>
+                        <MultiImageUploader
+                          onImagesUploaded={(urls) => handleImagesUploaded(colorIndex, urls)}
+                          currentImageUrls={field.images}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={2}>
+                        {fields.length > 1 && (
+                          <IconButton onClick={() => remove(colorIndex)} color="error">
+                            <DeleteIcon />
+                          </IconButton>
                         )}
-                      />
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={3}>
-                      <Controller
-                        name={`inventory.${index}.color`}
-                        control={control}
-                        rules={{ required: 'Color is required' }}
-                        render={({ field, fieldState }) => (
-                          <TextField {...field} label="Color" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={2}>
-                      <Controller
-                        name={`inventory.${index}.quantity`}
-                        control={control}
-                        rules={{ required: 'Quantity is required', min: 0 }}
-                        render={({ field, fieldState }) => (
-                          <TextField {...field} type="number" label="Quantity" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                      <MultiImageUploader
-                        onImagesUploaded={(urls) => handleImagesUploaded(index, urls)}
-                        currentImageUrls={field.image}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                      {fields.length > 1 && (
-                        <IconButton onClick={() => remove(index)} color="error">
-                          <DeleteIcon />
-                        </IconButton>
-                      )}
-                    </Grid>
-                  </Grid>
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle1">Sizes & Quantities</Typography>
+                      {getValues(`inventory.${colorIndex}.sizes`)?.map((sizeObj, sizeIndex) => (
+                        <Grid container spacing={2} key={`${sizeIndex}-${refreshTrigger}`} alignItems="center">
+                          <Grid item xs={5}>
+                            <Controller
+                              name={`inventory.${colorIndex}.sizes.${sizeIndex}.size`}
+                              control={control}
+                              rules={{ required: 'Size is required' }}
+                              render={({ field, fieldState }) => (
+                                <TextField {...field} label="Size" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />
+                              )}
+                            />
+                          </Grid>
+                          <Grid item xs={5}>
+                            <Controller
+                              name={`inventory.${colorIndex}.sizes.${sizeIndex}.quantity`}
+                              control={control}
+                              rules={{ required: 'Quantity is required', min: 0 }}
+                              render={({ field, fieldState }) => (
+                                <TextField {...field} type="number" label="Quantity" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />
+                              )}
+                            />
+                          </Grid>
+                          <Grid item xs={2}>
+                            <IconButton onClick={() => handleRemoveSize(colorIndex, sizeIndex)} color="error">
+                              <DeleteIcon />
+                            </IconButton>
+                          </Grid>
+                        </Grid>
+                      ))}
+                      <Button
+                        startIcon={<AddIcon />}
+                        onClick={() => handleAddSize(colorIndex)}
+                        sx={{ mt: 1 }}
+                      >
+                        Add Size
+                      </Button>
+                    </Box>
+                  </Box>
                 ))}
-                
                 <Button
                   startIcon={<AddIcon />}
-                  onClick={() => append({ size: '', color: '', quantity: 0, image: '' })}
+                  onClick={() => append({ color: '', images: '', sizes: [{ size: '', quantity: 0 }] })}
                   sx={{ mt: 1 }}
                 >
-                  Add Variation
+                  Add Color
                 </Button>
               </Grid>
             ) : (
