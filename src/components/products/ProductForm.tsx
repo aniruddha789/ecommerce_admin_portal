@@ -331,7 +331,7 @@ export const ProductForm = ({ open, onClose, onSubmit, product, refetch }: Produ
                     </Grid>
                     <Box sx={{ mt: 2 }}>
                       <Typography variant="subtitle1">Sizes & Quantities</Typography>
-                      {getValues(`inventory.${colorIndex}.sizes`)?.map((sizeObj, sizeIndex) => (
+                      {getValues(`inventory.${colorIndex}.sizes`)?.map((_, sizeIndex) => (
                         <Grid container spacing={2} key={`${sizeIndex}-${refreshTrigger}`} alignItems="center">
                           <Grid item xs={5}>
                             <Controller
