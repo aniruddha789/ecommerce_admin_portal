@@ -218,7 +218,7 @@ export const ProductForm = ({ open, onClose, onSubmit, product, refetch }: Produ
                     <MenuItem value="" disabled>Select Type</MenuItem>
                     <MenuItem value="tops">Tops</MenuItem>
                     <MenuItem value="bottoms">Bottoms</MenuItem>
-                    <MenuItem value="shoes">Shoes</MenuItem>
+                    <MenuItem value="shoe">Shoes</MenuItem>
                     <MenuItem value="accessories">Accessories</MenuItem>
                   </Select>
                 )}
